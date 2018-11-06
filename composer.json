@@ -1,0 +1,15 @@
+{
+    "name": "wptailor/cart-links-for-woocommerce",
+    "description": "Easily create a url that will populate a cart",
+    "type": "wordpress-plugin",
+    "require": {
+        "composer/installers": "^1.0"
+    },
+    "license": "GPLv2+",
+    "authors": [
+        {
+            "name": "WPTailor",
+            "email": "info@wptailor.com"
+        }
+    ]
+}
