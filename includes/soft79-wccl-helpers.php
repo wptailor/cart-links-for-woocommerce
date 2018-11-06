@@ -19,6 +19,18 @@ class SOFT79_WCCL_Helpers {
         return WC()->cart->get_cart_url();
     }
 
+    public static function get_product_sku( $product ) {
+        if ( ! isset( $product ) ) {
+            return false;
+        }
+
+        if ( is_callable( array( $product, 'get_sku' ) ) ) {
+            return $product->get_sku();
+        }
+
+        return $product->sku;
+    }
+
     public static function get_product_id( $product ) {
         //Since WC 3.0
         if ( is_callable( array( $product, 'get_id' ) ) ) {
@@ -41,7 +53,7 @@ class SOFT79_WCCL_Helpers {
         } else {
             return wp_get_post_parent_id( $product->variation_id );
         }
-    }    
+    }
 
     /**
      * Get current variation id
@@ -53,20 +65,26 @@ class SOFT79_WCCL_Helpers {
         }
 
         if ( is_callable( array( $product, 'get_id' ) ) ) {
-            return $product->get_id(); 
+            return $product->get_id();
         } elseif ( is_callable( array( $product, 'get_variation_id' ) ) ) {
-            return $product->get_variation_id(); 
+            return $product->get_variation_id();
         }
         return $product->variation_id;
     }
 
     /**
      * Retrieve the id of the product or the variation id if it's a variant.
-     * 
-     * @param WC_Product $product 
+     *
+     * @param WC_Product $product
      * @return int|bool The variation or product id. False if not a valid product
      */
     public static function get_product_or_variation_id( $product ) {
+        $sku = self::get_product_sku( $product );
+
+        if ( ! empty( $sku ) ) {
+            return $sku;
+        }
+
         if ( self::is_variation( $product ) ) {
             return self::get_variation_id( $product );
         } elseif ( $product instanceof WC_Product ) {
@@ -85,8 +103,8 @@ class SOFT79_WCCL_Helpers {
     public static function get_product_variation_attributes( $product ) {
     	//Since WC 2.4.0
         if ( is_callable( 'wc_get_product_variation_attributes' ) ) {
-            return wc_get_product_variation_attributes( $product->get_id() ); 
+            return wc_get_product_variation_attributes( $product->get_id() );
         }
         return $product->variation_data;
-    }      
+    }
 }

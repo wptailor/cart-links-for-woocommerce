@@ -17,7 +17,7 @@ defined('ABSPATH') or die();
 class SOFT79_WCCL {
     protected $version = '1.1.4';
 
-    public function __construct() {    
+    public function __construct() {
         add_action('init', array( &$this, 'controller_init' ) );
         add_action('plugins_loaded', array( &$this, 'load_plugin_textdomain' ) );
     }
@@ -42,7 +42,7 @@ class SOFT79_WCCL {
         if ( ! class_exists('WC_Cart') ) {
             return;
         }
-        
+
         //Customer hooks
         add_action( 'wp_loaded', array( &$this, 'check_url' ), 5); //Perform this before autocoupon does it
 
@@ -64,7 +64,7 @@ class SOFT79_WCCL {
      */
     public function action_wp_enqueue_scripts() {
         if ( is_cart() ) {
-            wp_enqueue_script( 'soft79_wccl_js', $this->pluginUrl() . '/assets/js/frontend.js', array( 'jquery' ), $this->pluginVersion(), true ); 
+            wp_enqueue_script( 'soft79_wccl_js', $this->pluginUrl() . '/assets/js/frontend.js', array( 'jquery' ), $this->pluginVersion(), true );
         }
     }
 
@@ -75,15 +75,15 @@ class SOFT79_WCCL {
         $url = $this->get_fill_cart_url();
 
         if ( $url != false ) {
-            echo '<div class="soft79_fill_cart_url">' 
-            . __( 'Link to this cart:', 'soft79_wccl' ) 
+            echo '<div class="soft79_fill_cart_url">'
+            . __( 'Link to this cart:', 'soft79_wccl' )
             . ' <input type="text" value="' . esc_url( $url ) . '"></div>';
         }
     }
 
     /**
      * Return the url with &fill_cart= added
-     * 
+     *
      * @param string (Optional) The base url. If omitted the url to the cart page will be used.
      * @return string|false The url, or false if the cart is empty
      */
@@ -93,13 +93,13 @@ class SOFT79_WCCL {
         foreach ( $cart_contents as $cart_item_key => $cart_item ) {
             if ( ! isset( $cart_item['_wjecf_free_product_coupon'] ) ) {
                 $pr_id = SOFT79_WCCL_Helpers::get_product_or_variation_id( $cart_item['data'] );
-                $qty = $cart_item['quantity'];            
+                $qty = $cart_item['quantity'];
                 $parts[] = $qty == 1 ? strval( $pr_id ) : $qty . 'x' . $pr_id;
             }
         }
         if ( empty( $parts ) ) {
             return false;
-        } else {            
+        } else {
             return add_query_arg( 'fill_cart', implode( ',', $parts ), $base_url == false ? SOFT79_WCCL_Helpers::wc_get_cart_url() : $base_url );
         }
 
@@ -127,11 +127,11 @@ class SOFT79_WCCL {
 
         //Refer to url without ?fill_cart to prevent fill_cart to be executed after customer performs a cart update (because WooCommerce also redirects to referer )
         $requested_url  = is_ssl() ? 'https://' : 'http://';
-        $requested_url .= $_SERVER['HTTP_HOST'];           
+        $requested_url .= $_SERVER['HTTP_HOST'];
         $requested_url .= $_SERVER['REQUEST_URI'];
         wp_safe_redirect( remove_query_arg( array('set_cart', 'fill_cart'), $requested_url ) );
         exit;
-    }    
+    }
 
     /**
      * Populates the cart with the products passed in $fill_string
@@ -148,25 +148,30 @@ class SOFT79_WCCL {
 
         $cart_contents = WC()->cart->get_cart();
 
-        $pattern = '/^(?:(\d+)x)?(\d+)$/i';
+        $pattern = '/^(?:(\d+)x)?([^\s\?&]+)$/i';
         $fill_strings = explode( ",", $fill_string );
         $my_notices = array();
 
         //Parse querystring
         $products_to_append = array();
-        foreach ( $fill_strings as $fill_string ) {            
+        foreach ( $fill_strings as $fill_string ) {
             if ( preg_match ( $pattern, $fill_string, $matches ) ) {
-                //var_dump($matches);
                 $quantity = $matches[1] ? absint( $matches[1] ) : 1;
-                $product_id = absint( $matches[2] );
+                // @todo This is not ideal since SKUs can be numeric too
+                $product_id = is_numeric( $matches[2] ) ? absint( $matches[2] ) : (string) trim($matches[2]);
                 $products_to_append[$product_id] = $quantity;
             }
         }
 
         //Append items to the cart
-        foreach ( $products_to_append as $product_id => $quantity ) {
+        foreach ( $products_to_append as $id_or_sku => $quantity ) {
+            if ( is_string( $id_or_sku ) ) {
+                $product_id = wc_get_product_id_by_sku( $id_or_sku );
+            }
+
             $product = wc_get_product( $product_id );
-            if ( $product == false ) {
+
+            if ( $product === false ) {
                 $my_notices[] = sprintf( __('Unknown product &quot;%d&quot;.', 'soft79_wccl' ), $product_id );
             } else {
                 $available = $this->get_stock_available( $product, $quantity );
@@ -236,7 +241,7 @@ class SOFT79_WCCL {
 
     /**
      * Checks whether item is in the cart and returns the key.
-     * 
+     *
      * @returns string|bool false if not found, otherwise the cart_item_key of the product
      */
     protected function get_cart_item_key( $cart_contents, $product_or_variation_id ) {
@@ -245,7 +250,7 @@ class SOFT79_WCCL {
                 $pr_id = SOFT79_WCCL_Helpers::get_product_or_variation_id( $cart_item['data'] );
                 if ( $pr_id == $product_or_variation_id ) {
                     return $cart_item_key;
-                }                
+                }
             }
         }
         return false;
@@ -268,22 +273,22 @@ class SOFT79_WCCL {
         return $available;
     }
 
-    
+
     /**
      * Get the plugin url without trailing slash.
      * @return string
      */
     public function pluginUrl() {
         return untrailingslashit( plugins_url( '/', $this->pluginFullPath() ) );
-    }    
-    
+    }
+
     /**
      * Get the plugin path without trailing slash.
      * @return string
-     */    
+     */
     public function pluginDirectory() {
         return untrailingslashit( dirname( $this->pluginFullPath() ) );
-    } 
+    }
 
     /**
      * Plugin filename including path
@@ -291,7 +296,7 @@ class SOFT79_WCCL {
      */
     public function pluginFullPath() {
         return __FILE__;
-    } 
+    }
 
     /**
      * Plugin base name ( path relative to wp-content/plugins/ )
@@ -299,11 +304,11 @@ class SOFT79_WCCL {
      */
     public function pluginBase() {
         return plugin_basename( $this->pluginFullPath() );
-    }     
+    }
 
     public function pluginVersion() {
         return $this->version;
-    }      
+    }
 }
 
 require_once('includes/soft79-wccl-helpers.php');
