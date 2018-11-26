@@ -72,7 +72,7 @@ class SOFT79_WCCL {
      * Add 'Link to this cart' to the cart actions
      */
     public function woocommerce_cart_actions() {
-        $url = $this->get_fill_cart_url();
+        $url = $this->get_fill_cart_url(false,'set_cart');
 
         if ( $url != false ) {
             echo '<div class="soft79_fill_cart_url">'
@@ -87,7 +87,7 @@ class SOFT79_WCCL {
      * @param string (Optional) The base url. If omitted the url to the cart page will be used.
      * @return string|false The url, or false if the cart is empty
      */
-    public function get_fill_cart_url( $base_url = false ) {
+    public function get_fill_cart_url( $base_url = false, $cart_action = 'fill_cart' ) {
         $cart_contents = WC()->cart->get_cart();
         $parts = array();
         foreach ( $cart_contents as $cart_item_key => $cart_item ) {
@@ -100,7 +100,7 @@ class SOFT79_WCCL {
         if ( empty( $parts ) ) {
             return false;
         } else {
-            return add_query_arg( 'fill_cart', implode( ',', $parts ), $base_url == false ? SOFT79_WCCL_Helpers::wc_get_cart_url() : $base_url );
+            return add_query_arg( $cart_action, implode( ',', $parts ), $base_url == false ? SOFT79_WCCL_Helpers::wc_get_cart_url() : $base_url );
         }
 
     }
@@ -144,7 +144,7 @@ class SOFT79_WCCL {
         wc_clear_notices();
 
         //Clear the cart
-        WC()->cart->empty_cart();
+        //WC()->cart->empty_cart();
 
         $cart_contents = WC()->cart->get_cart();
 
