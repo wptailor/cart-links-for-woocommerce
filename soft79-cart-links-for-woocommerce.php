@@ -143,8 +143,8 @@ class SOFT79_WCCL {
         $original_notices = wc_get_notices();
         wc_clear_notices();
 
-        ////Clear the cart
-        //WC()->cart->empty_cart();
+        //Clear the cart
+        WC()->cart->empty_cart();
 
         $cart_contents = WC()->cart->get_cart();
 
