@@ -169,34 +169,40 @@ class SOFT79_WCCL {
                 $product_id = wc_get_product_id_by_sku( $id_or_sku );
             }
 
-            $product = wc_get_product( $product_id );
+            if( !apply_filters('should_stack_products', false, $product_id, $quantity) ) {
 
-            if ( $product === false ) {
-                $my_notices[] = sprintf( __('Unknown product &quot;%d&quot;.', 'soft79_wccl' ), $product_id );
-            } else {
-                $available = $this->get_stock_available( $product, $quantity );
-
-                //Is it already in the cart?
-                $cart_item_key = $this->get_cart_item_key( $cart_contents, $product_id );
-                $qty_in_cart = $cart_item_key === false ? 0 :  $cart_contents[$cart_item_key]['quantity'];
-
-                //Only add to cart if required
-                if ( $qty_in_cart < $quantity ) {
-                    if ( $available == 0 ) {
-                        $my_notices[] = sprintf( __('Can not add %d &quot;%s&quot; because it is not available.', 'soft79_wccl' ), $quantity, $product->get_title() );
-                    } else {
-                        if ( $available < $quantity && $available > 0 ) {
-                            $my_notices[] = sprintf( __('Reduced quantity of &quot;%s&quot; from %d to %d because there\'s not enough stock.', 'soft79_wccl' ), $product->get_title(), $quantity, $available );
-                        }
-
-                        if ( $cart_item_key !== false ) {
-                            WC()->cart->set_quantity( $cart_item_key, $available );
+                $product = wc_get_product( $product_id );
+                
+                if ( $product === false ) {
+                    $my_notices[] = sprintf( __('Unknown product &quot;%d&quot;.', 'soft79_wccl' ), $product_id );
+                } else {
+    
+                    
+                    $available = $this->get_stock_available( $product, $quantity );
+    
+                    //Is it already in the cart?
+                    $cart_item_key = $this->get_cart_item_key( $cart_contents, $product_id );
+                    $qty_in_cart = $cart_item_key === false ? 0 :  $cart_contents[$cart_item_key]['quantity'];
+    
+                    //Only add to cart if required
+                    if ( $qty_in_cart < $quantity ) {
+                        if ( $available == 0 ) {
+                            $my_notices[] = sprintf( __('Can not add %d &quot;%s&quot; because it is not available.', 'soft79_wccl' ), $quantity, $product->get_title() );
                         } else {
-                            $this->add_to_cart( $product, $available );
+                            if ( $available < $quantity && $available > 0 ) {
+                                $my_notices[] = sprintf( __('Reduced quantity of &quot;%s&quot; from %d to %d because there\'s not enough stock.', 'soft79_wccl' ), $product->get_title(), $quantity, $available );
+                            }
+    
+                            if ( $cart_item_key !== false ) {
+                                WC()->cart->set_quantity( $cart_item_key, $available );
+                            } else {
+                                $this->add_to_cart( $product, $available );
+                            }
                         }
                     }
                 }
             }
+
         }
         $catched_notices = wc_get_notices();
 
