@@ -89,6 +89,8 @@ class SOFT79_WCCL {
      */
     public function get_fill_cart_url( $base_url = false, $cart_action = 'fill_cart' ) {
         $cart_contents = WC()->cart->get_cart();
+        $applied_coupons = WC()->cart->get_applied_coupons();
+
         $parts = array();
         foreach ( $cart_contents as $cart_item_key => $cart_item ) {
             if ( ! isset( $cart_item['_wjecf_free_product_coupon'] ) ) {
@@ -100,6 +102,9 @@ class SOFT79_WCCL {
         if ( empty( $parts ) ) {
             return false;
         } else {
+            if( $applied_coupons ) 
+                return add_query_arg( array( $cart_action => implode( ',', $parts ), 'coupons' => implode(',', $applied_coupons) ), $base_url == false ? SOFT79_WCCL_Helpers::wc_get_cart_url() : $base_url );
+
             return add_query_arg( $cart_action, implode( ',', $parts ), $base_url == false ? SOFT79_WCCL_Helpers::wc_get_cart_url() : $base_url );
         }
 
@@ -115,11 +120,11 @@ class SOFT79_WCCL {
 
         if ( isset( $_GET['fill_cart'] ) ) {
         	//Since 1.1.3: Append to cart contents
-            $this->fill_cart( $_GET['fill_cart'] );
+            $this->fill_cart( $_GET['fill_cart'], $_GET['coupons'] );
         } elseif ( isset( $_GET['set_cart'] ) ) {
         	//Since 1.1.3: Replace cart contents
             WC()->cart->empty_cart();
-            $this->fill_cart( $_GET['set_cart'] );
+            $this->fill_cart( $_GET['set_cart'], $_GET['coupons'] );
         } else {
         	//Do nothing
         	return;
@@ -129,7 +134,7 @@ class SOFT79_WCCL {
         $requested_url  = is_ssl() ? 'https://' : 'http://';
         $requested_url .= $_SERVER['HTTP_HOST'];
         $requested_url .= $_SERVER['REQUEST_URI'];
-        wp_safe_redirect( remove_query_arg( array('set_cart', 'fill_cart'), $requested_url ) );
+        wp_safe_redirect( remove_query_arg( array('set_cart', 'fill_cart', 'coupons'), $requested_url ) );
         exit;
     }
 
@@ -138,7 +143,7 @@ class SOFT79_WCCL {
      * @param string $fill_string eg. 123,2x124 will populate the cart with 1x product 123 and 2x product 124
      * @return void
      */
-    public function fill_cart( $fill_string ) {
+    public function fill_cart( $fill_string, $coupons = '' ) {
 
         $original_notices = wc_get_notices();
         wc_clear_notices();
@@ -151,6 +156,11 @@ class SOFT79_WCCL {
         $pattern = '/^(?:(\d+)x)?([^\s\?&]+)$/i';
         $fill_strings = explode( ",", $fill_string );
         $my_notices = array();
+
+        if( $coupons ) {
+            WC()->cart->set_applied_coupons( array_map('esc_attr', explode(",", $coupons) ));
+        }
+        
 
         //Parse querystring
         $products_to_append = array();
