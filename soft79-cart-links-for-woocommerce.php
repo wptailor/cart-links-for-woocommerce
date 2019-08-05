@@ -119,12 +119,21 @@ class SOFT79_WCCL {
     public function check_url() {
 
         if ( isset( $_GET['fill_cart'] ) ) {
-        	//Since 1.1.3: Append to cart contents
-            $this->fill_cart( $_GET['fill_cart'], $_GET['coupons'] );
+            //Since 1.1.3: Append to cart contents
+            if( isset( $_GET['coupons'] ) ) {
+                $this->fill_cart( $_GET['fill_cart'], $_GET['coupons'] );
+            } else {
+                $this->fill_cart( $_GET['fill_cart'] );
+            }
         } elseif ( isset( $_GET['set_cart'] ) ) {
         	//Since 1.1.3: Replace cart contents
             WC()->cart->empty_cart();
-            $this->fill_cart( $_GET['set_cart'], $_GET['coupons'] );
+
+            if( isset( $_GET['coupons'] ) ) {
+                $this->fill_cart( $_GET['set_cart'], $_GET['coupons'] );
+            } else {
+                $this->fill_cart( $_GET['set_cart'] );
+            }
         } else {
         	//Do nothing
         	return;
