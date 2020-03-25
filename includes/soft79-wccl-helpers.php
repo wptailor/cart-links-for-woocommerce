@@ -79,11 +79,11 @@ class SOFT79_WCCL_Helpers {
      * @return int|bool The variation or product id. False if not a valid product
      */
     public static function get_product_or_variation_id( $product ) {
-        $sku = self::get_product_sku( $product );
+        // $sku = self::get_product_sku( $product );
 
-        if ( ! empty( $sku ) ) {
-            return $sku;
-        }
+        // if ( ! empty( $sku ) ) {
+        //     return $sku;
+        // }
 
         if ( self::is_variation( $product ) ) {
             return self::get_variation_id( $product );

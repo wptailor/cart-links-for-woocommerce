@@ -184,12 +184,14 @@ class SOFT79_WCCL {
 
         //Append items to the cart
         foreach ( $products_to_append as $id_or_sku => $quantity ) {
-            if ( is_string( $id_or_sku ) ) {
-                $product_id = wc_get_product_id_by_sku( $id_or_sku );
-            }
+            // if ( is_string( $id_or_sku ) ) {
+            //     $product_id = wc_get_product_id_by_sku( $id_or_sku );
+            // }
+            
+            $product_id = $id_or_sku;
 
             if( !apply_filters('should_stack_products', false, $product_id, $quantity) ) {
-
+                
                 $product = wc_get_product( $product_id );
                 
                 if ( $product === false ) {
